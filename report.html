@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사고 처리 기록</title>
+<!--
+  사고 처리 기록(P4). 차량 앱 C9의 QR로 연다: report.html#<reportFragment 결과>
+  # 뒤 값은 서버로 전송되지 않는다. 원자료 + 요약 JSON을 raw deflate → base64url로 담았다
+  (android-app/app/.../domain/report/ReportLink.kt). 이 페이지는 아무것도 업로드하지 않는다.
+-->
+<style>
+  :root {
+    --bg: #f4f5f6; --fg: #131417; --muted: #686a72; --card: #ffffff; --line: #c7c9ce;
+    --brand: #0064ff; --warn-bg: #131417; --warn-fg: #ffffff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131417; --fg: #ffffff; --muted: #c7c9ce; --card: #1d1e21; --line: #44464e;
+      --brand: #0082ff; --warn-bg: #ffffff; --warn-fg: #131417; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
+  h1 { font-size: 22px; margin: 4px 0 4px; }
+  h2 { font-size: 17px; margin: 22px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .summary { font-size: 18px; font-weight: 600; }
+  .source { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .bar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  button, a.button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    padding: 10px 14px; border-radius: 999px; text-decoration: none; }
+  .primary { background: var(--brand) !important; border-color: var(--brand) !important; color: #fff !important; font-weight: 700; }
+  button:focus-visible, a.button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+    display: flex; gap: 12px; justify-content: space-between; align-items: baseline; }
+  li .k { color: var(--muted); flex: none; }
+  li .v { font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+  li.warn { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-bg); }
+  li.warn .k { color: inherit; opacity: .8; }
+  details { margin-top: 18px; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+  .foot { color: var(--muted); font-size: 14px; margin-top: 18px; }
+  .error { border-left: 4px solid var(--fg); }
+</style>
+</head>
+<body>
+<h1>사고 처리 기록</h1>
+<p class="lede" id="when">기록을 여는 중…</p>
+<main id="app"></main>
+<p class="foot">이 기록은 이 폰에서만 보여요. 차량 앱이 정리한 참고 자료이며 손해사정 결과가 아니에요.</p>
+
+<script>
+(async () => {
+  const app = document.getElementById('app');
+  const when = document.getElementById('when');
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) k === 'class' ? n.className = v : n.setAttribute(k, v);
+    for (const kid of kids) if (kid != null) n.append(kid);
+    return n;
+  };
+  const fail = (msg) => { when.textContent = ''; app.replaceChildren(el('div', { class: 'card error' }, msg)); };
+
+  async function decode(fragment) {
+    const b64 = fragment.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((fragment.length + 3) % 4);
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return JSON.parse(await new Response(stream).text());
+  }
+
+  const fragment = location.hash.slice(1);
+  if (!fragment) return fail('기록이 없어요. 차량 화면의 QR을 다시 찍어 주세요.');
+  if (typeof DecompressionStream === 'undefined') return fail('이 브라우저에서는 기록을 열 수 없어요. 최신 Chrome이나 Safari로 열어 주세요.');
+
+  let data;
+  try { data = await decode(fragment); } catch (e) { return fail('기록을 읽지 못했어요. QR을 다시 찍어 주세요.'); }
+  const raw = data.raw || {};
+  const summary = data.summary || {};
+  when.textContent = raw.occurredAtText ? `${raw.occurredAtText} 사고` : '';
+
+  const injury = { yes: '다친 사람 있음', no: '다친 사람 없음', no_response: '응답 없음' }[raw.injury] || '-';
+  const vehicle = raw.vehicle || { checked: [], issues: [] };
+  const vehicleText = !vehicle.checked.length ? '확인 못 함' : vehicle.issues.length ? vehicle.issues.join(', ') : '이상 없음';
+  const zones = (raw.damageZones || []).map(z => z.label);
+  const item = (k, v, warn) => el('li', warn ? { class: 'warn' } : {}, el('span', { class: 'k' }, k), el('span', { class: 'v' }, v));
+
+  const summaryCard = el('div', { class: 'card' },
+    el('div', { class: 'summary', id: 'summary' }, summary.text || '-'),
+    el('div', { class: 'source' }, summary.source === 'gleo-llm' ? 'Gleo AI가 만든 요약' : '기본 문장으로 만든 요약'),
+  );
+  const bar = el('div', { class: 'bar' });
+  const copy = el('button', { type: 'button', class: 'primary' }, '요약 복사');
+  copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(summary.text || ''); copy.textContent = '복사했어요'; }
+    catch { copy.textContent = '복사하지 못했어요'; }
+  };
+  bar.append(copy);
+  if (raw.insurer && raw.insurer.phone) {
+    bar.append(el('a', { class: 'button', href: 'tel:' + raw.insurer.phone.replace(/[^0-9+]/g, '') }, `${raw.insurer.name} 전화`));
+  }
+  summaryCard.append(bar);
+
+  const loc = raw.location;
+  const mapLink = loc ? el('a', { href: `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`, target: '_blank', rel: 'noopener' }, loc.text || '지도') : null;
+
+  app.replaceChildren(
+    el('h2', {}, '보험사에 알릴 내용'), summaryCard,
+    el('h2', {}, '처리 체크리스트'),
+    el('ul', {},
+      item('부상 확인', injury, raw.injury === 'yes'),
+      item('119 안내', raw.emergencyGuided ? '안내받음' : '받지 않음'),
+      item('안전 확보', raw.secureSceneDone ? '완료' : '-'),
+      item('차량 점검', vehicleText, vehicle.issues.length > 0),
+      item('파손 부위', zones.length ? zones.join(', ') : '-'),
+      item('보험사 연락', raw.insurerDialed ? '전화 연결함' : '하지 않음'),
+    ),
+    el('h2', {}, '사고 정보'),
+    el('ul', {},
+      item('시각', raw.occurredAtText || '-'),
+      el('li', {}, el('span', { class: 'k' }, '위치'), el('span', { class: 'v' }, mapLink || '확인 못 함')),
+      item('보험사', raw.insurer ? `${raw.insurer.name} ${raw.insurer.phone}` : '미등록'),
+    ),
+    el('details', {}, el('summary', {}, '원자료(JSON) 보기'), el('pre', {}, JSON.stringify(data, null, 2))),
+  );
+})();
+</script>
+</body>
+</html>

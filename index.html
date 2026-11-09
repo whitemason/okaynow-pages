@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사고 촬영 안내</title>
+<!--
+  폰 촬영 안내(P1). 차량 앱 C6의 QR로 연다: index.html?steps=<encodeSteps 결과>
+  사진·영상은 폰 기본 카메라로 찍어 폰에 저장한다. 이 페이지는 아무것도 업로드하지 않는다.
+  구역 정의와 문구는 android-app/app/.../domain/damage/CarZone.kt, ShotPlan.kt와 같게 유지한다.
+-->
+<style>
+  :root {
+    /* 회색조 + 브랜드 색 1개(Pleos blue). 브랜드 색은 사용자가 누를 곳에만 쓴다. */
+    --bg: #f4f5f6; --fg: #131417; --muted: #686a72; --card: #ffffff; --line: #c7c9ce;
+    --brand: #0064ff; --hit: #131417;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131417; --fg: #ffffff; --muted: #c7c9ce; --card: #1d1e21; --line: #44464e;
+      --brand: #0082ff; --hit: #ffffff; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
+  h1 { font-size: 22px; margin: 4px 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 14px; }
+  .safety { border-left: 4px solid var(--fg); background: var(--card); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; }
+  .bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    padding: 10px 14px; border-radius: 999px; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700; }
+  button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .progress { color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; align-self: center; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid;
+    grid-template-columns: 1fr; gap: 8px; }
+  li.done { opacity: .55; }
+  .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--fg); color: var(--bg); font-weight: 700; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .title { font-weight: 700; }
+  .dist { color: var(--muted); font-size: 14px; }
+  .text { margin: 6px 0 8px; }
+  label { display: inline-flex; gap: 8px; align-items: center; min-height: 32px; }
+  input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--brand); }
+  svg { width: 60%; max-width: 220px; height: auto; display: block; margin: 0 auto; }
+  .empty { background: var(--card); border-radius: 12px; padding: 16px; }
+  .foot { color: var(--muted); font-size: 14px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<h1>순서대로 찍으세요</h1>
+<p class="lede">사진은 이 폰에만 저장돼요.</p>
+<div class="safety">차도 쪽은 피하세요. 위험하면 멈추세요.</div>
+<div class="bar">
+  <button class="primary" id="read-next" type="button">다음 단계 듣기</button>
+  <button id="read-all" type="button">전체 듣기</button>
+  <span class="progress" id="progress"></span>
+</div>
+<ol id="steps"></ol>
+<p class="foot">보험사에는 이 폰 사진첩에서 보내세요.</p>
+
+<script>
+(function () {
+  // CarZone.kt와 같은 값(미터, 앞이 위, 운전석이 왼쪽)
+  var W = 1.9, L = 4.6;
+  var ZONES = {
+    fb:  ["앞 범퍼",          0.3, 0,    1.6, 0.35],
+    hd:  ["보닛",             0.3, 0.35, 1.6, 1.4],
+    flf: ["운전석 쪽 앞 펜더", 0,   0,    0.3, 1.4],
+    frf: ["조수석 쪽 앞 펜더", 1.6, 0,    1.9, 1.4],
+    lfd: ["운전석 앞문",       0,   1.4,  0.3, 2.4],
+    lrd: ["운전석 쪽 뒷문",    0,   2.4,  0.3, 3.4],
+    rfd: ["조수석 앞문",       1.6, 1.4,  1.9, 2.4],
+    rrd: ["조수석 쪽 뒷문",    1.6, 2.4,  1.9, 3.4],
+    rg:  ["지붕·유리",         0.3, 1.4,  1.6, 3.75],
+    rlq: ["운전석 쪽 뒤 펜더", 0,   3.4,  0.3, 4.6],
+    rrq: ["조수석 쪽 뒤 펜더", 1.6, 3.4,  1.9, 4.6],
+    trb: ["트렁크·뒤 범퍼",    0.3, 3.75, 1.6, 4.6]
+  };
+  // ShotPlan.kt와 같은 문구
+  function stepText(kind, label) {
+    switch (kind) {
+      case "S": return ["현장 전체", "3~5m", "차 두 대와 도로가 함께"];
+      case "M": return [label + " 대각선", "1~2m", "대각선에서 차 윤곽과 함께"];
+      case "C": return [label + " 가까이", "30~50cm", "파손 부위를 비스듬히"];
+      case "P": return ["상대 차 번호판", "1~2m", "번호판과 파손 부위"];
+      case "V": return ["한 바퀴 영상", "30초", "차 주위를 천천히 한 바퀴"];
+    }
+    return ["촬영", "", ""];
+  }
+
+  var params = new URLSearchParams(location.search);
+  var raw = params.get("steps") || "";
+  var steps = raw.split(";").filter(Boolean).map(function (s, i) {
+    var p = s.split(",");
+    var zone = ZONES[p[1]];
+    var t = stepText(p[0], zone ? zone[0] : "");
+    return {
+      n: i + 1, kind: p[0], zone: p[1] || "",
+      x: p[2] === "" || p[2] == null ? null : Number(p[2]) / 100,
+      y: p[3] === "" || p[3] == null ? null : Number(p[3]) / 100,
+      facing: p[4] === "" || p[4] == null ? null : Number(p[4]),
+      title: t[0], dist: t[1], text: t[2]
+    };
+  });
+  var hitZones = {};
+  steps.forEach(function (s) { if (s.zone) hitZones[s.zone] = true; });
+
+  var list = document.getElementById("steps");
+  if (!steps.length) {
+    var empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "순서가 없어요. 차 화면에서 부위를 고르고 QR을 다시 찍으세요.";
+    list.replaceWith(empty);
+  }
+
+  var M = 1.4; // 그림 여백(미터)
+  // 앞이 위, 운전석이 왼쪽(CarZone.kt 좌표와 같은 방향)
+  function sx(p) { return p.x + M; }
+  function sy(p) { return p.y + M; }
+  // car_top.png(455×858) 속 차체 범위(px, TopViewCar.kt와 같은 값)
+  var IMG = { w: 455, h: 858, left: 104, top: 5, bodyW: 322, bodyH: 801 };
+  function svgFor(step) {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 " + (W + 2 * M) + " " + (L + 2 * M));
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", step.title + " 촬영 위치");
+    function el(name, attrs) {
+      var e = document.createElementNS(ns, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg.appendChild(e);
+      return e;
+    }
+    var css = getComputedStyle(document.documentElement);
+    var kx = W / IMG.bodyW, ky = L / IMG.bodyH;
+    el("image", { href: "car_top.png", x: M - IMG.left * kx, y: M - IMG.top * ky, width: IMG.w * kx, height: IMG.h * ky });
+    Object.keys(ZONES).forEach(function (code) {
+      var z = ZONES[code];
+      var on = code === step.zone || (step.kind === "S" || step.kind === "V") && hitZones[code];
+      el("rect", { x: z[1] + M, y: z[2] + M, width: z[3] - z[1], height: z[4] - z[2],
+        fill: on ? css.getPropertyValue("--hit") : "none", "fill-opacity": on ? 0.35 : 0,
+        stroke: css.getPropertyValue("--line"), "stroke-width": 0.02 });
+    });
+    if (step.x != null && step.y != null) {
+      var cam = { x: step.x, y: step.y };
+      var cx = Math.max(0.25, Math.min(W + 2 * M - 0.25, sx(cam)));
+      var cy = Math.max(0.25, Math.min(L + 2 * M - 0.25, sy(cam)));
+      if (step.facing != null) {
+        var r = 1.0;
+        // 0° = 앞(위), 시계 방향. 테두리에 붙인 위치에서 그린다(TopViewCar.kt와 같음).
+        var tip = function (deg) {
+          var a = deg * Math.PI / 180;
+          return (cx + Math.sin(a) * r) + " " + (cy - Math.cos(a) * r);
+        };
+        el("path", { d: "M" + cx + " " + cy + " L" + tip(step.facing - 30) + " L" + tip(step.facing + 30) + " Z",
+          fill: css.getPropertyValue("--fg"), "fill-opacity": 0.25 });
+      }
+      el("circle", { cx: cx, cy: cy, r: 0.22, fill: css.getPropertyValue("--fg") });
+    }
+    return svg;
+  }
+
+  var items = steps.map(function (step) {
+    var li = document.createElement("li");
+    li.id = "step-" + step.n;
+    li.appendChild(svgFor(step));
+    var body = document.createElement("div");
+    var head = document.createElement("div");
+    var num = document.createElement("span");
+    num.className = "num"; num.textContent = step.n;
+    var title = document.createElement("span");
+    title.className = "title"; title.textContent = step.title;
+    head.append(num, title);
+    var dist = document.createElement("div");
+    dist.className = "dist"; dist.textContent = step.dist;
+    var text = document.createElement("p");
+    text.className = "text"; text.textContent = step.text;
+    var label = document.createElement("label");
+    var box = document.createElement("input");
+    box.type = "checkbox"; box.id = "done-" + step.n;
+    box.addEventListener("change", function () { li.classList.toggle("done", box.checked); update(); });
+    label.append(box, document.createTextNode("찍었어요"));
+    body.append(head, dist, text, label);
+    li.appendChild(body);
+    list.appendChild(li);
+    return { step: step, li: li, box: box };
+  });
+
+  function update() {
+    var done = items.filter(function (i) { return i.box.checked; }).length;
+    document.getElementById("progress").textContent = items.length ? done + " / " + items.length : "";
+  }
+  update();
+
+  // 폰이 직접 읽어 준다(차량 스피커는 차 밖에서 잘 안 들린다).
+  function say(text) {
+    if (!("speechSynthesis" in window)) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR";
+    speechSynthesis.speak(u);
+  }
+  document.getElementById("read-next").addEventListener("click", function () {
+    var next = items.find(function (i) { return !i.box.checked; });
+    if (!next) { say("다 찍었어요. 차에서 촬영 완료를 누르세요."); return; }
+    next.li.scrollIntoView({ behavior: "smooth", block: "center" });
+    say(next.step.n + "번. " + next.step.title + ". " + next.step.text);
+  });
+  document.getElementById("read-all").addEventListener("click", function () {
+    speechSynthesis && speechSynthesis.cancel();
+    say("차도 쪽은 피하세요.");
+    items.forEach(function (i) { say(i.step.n + "번. " + i.step.title); });
+  });
+})();
+</script>
+</body>
+</html>
