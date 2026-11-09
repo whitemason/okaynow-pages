@@ -6,8 +6,10 @@
 <title>사고 촬영 안내</title>
 <!--
   폰 촬영 안내(P1). 차량 앱 C6의 QR로 연다: index.html?steps=<encodeSteps 결과>
-  사진·영상은 폰 기본 카메라로 찍어 폰에 저장한다. 이 페이지는 아무것도 업로드하지 않는다.
-  구역 정의와 문구는 android-app/app/.../domain/damage/CarZone.kt, ShotPlan.kt와 같게 유지한다.
+  단계마다 "찍기" 버튼으로 폰 카메라를 연다(<input capture>). 찍은 사진·영상은 이 페이지 메모리에만 있고
+  아무것도 업로드하지 않는다. "저장"(공유 시트 또는 내려받기)을 눌러야 폰 사진첩·파일에 남는다.
+  위 영역(제목·안전 문구·다음 단계 듣기)은 화면 위에 고정한다.
+  구역 정의와 문구는 okaynow-pleos의 domain/damage/CarZone.kt, ShotPlan.kt와 같게 유지한다.
 -->
 <style>
   :root {
@@ -23,26 +25,38 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg);
     font: 16px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
-  h1 { font-size: 22px; margin: 4px 0 4px; }
-  .lede { color: var(--muted); margin: 0 0 14px; }
-  .safety { border-left: 4px solid var(--fg); background: var(--card); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; }
-  .bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    padding: 0 max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
+  /* 위 영역 고정: 촬영하며 내려가도 "다음 단계 듣기"가 늘 보이게 */
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg);
+    margin: 0 calc(-1 * max(16px, env(safe-area-inset-right))) 12px calc(-1 * max(16px, env(safe-area-inset-left)));
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+    border-bottom: 1px solid var(--line); }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  .safety { border-left: 4px solid var(--fg); background: var(--card); padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-weight: 600; }
+  .bar { display: flex; gap: 8px; align-items: center; }
+  .bar .primary { flex: 1; padding: 14px; font-size: 18px; }
+  li { scroll-margin-top: calc(var(--header-h, 160px) + 12px); }
   button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--fg);
     padding: 10px 14px; border-radius: 999px; }
   button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700; }
   button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-  .progress { color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; align-self: center; }
+  button:disabled { opacity: .4; }
+  .progress { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3.5em; text-align: right; }
   ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
   li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid;
     grid-template-columns: 1fr; gap: 8px; }
-  li.done { opacity: .55; }
+  li.done > svg, li.done .title, li.done .dist, li.done .text { opacity: .55; }
   .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
     background: var(--fg); color: var(--bg); font-weight: 700; margin-right: 6px; font-variant-numeric: tabular-nums; }
   .title { font-weight: 700; }
   .dist { color: var(--muted); font-size: 14px; }
   .text { margin: 6px 0 8px; }
-  label { display: inline-flex; gap: 8px; align-items: center; min-height: 32px; }
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .shoot { background: var(--brand) !important; border-color: var(--brand) !important; color: #fff !important; font-weight: 700; }
+  .shot { display: block; width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px; background: var(--bg); margin-top: 8px; }
+  .shot-note { color: var(--muted); font-size: 14px; }
+  input[type=file] { display: none; }
+  label { display: inline-flex; gap: 8px; align-items: center; min-height: 32px; margin-left: auto; }
   input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--brand); }
   svg { width: 60%; max-width: 220px; height: auto; display: block; margin: 0 auto; }
   .empty { background: var(--card); border-radius: 12px; padding: 16px; }
@@ -51,16 +65,16 @@
 </style>
 </head>
 <body>
-<h1>순서대로 찍으세요</h1>
-<p class="lede">사진은 이 폰에만 저장돼요.</p>
-<div class="safety">차도 쪽은 피하세요. 위험하면 멈추세요.</div>
-<div class="bar">
-  <button class="primary" id="read-next" type="button">다음 단계 듣기</button>
-  <button id="read-all" type="button">전체 듣기</button>
-  <span class="progress" id="progress"></span>
-</div>
+<header id="top">
+  <h1>순서대로 찍으세요</h1>
+  <div class="safety">차도 쪽은 피하세요. 위험하면 멈추세요.</div>
+  <div class="bar">
+    <button class="primary" id="read-next" type="button">다음 단계 듣기</button>
+    <span class="progress" id="progress"></span>
+  </div>
+</header>
 <ol id="steps"></ol>
-<p class="foot">보험사에는 이 폰 사진첩에서 보내세요. <a href="privacy.html">개인정보 안내</a></p>
+<p class="foot">찍은 사진은 이 폰 안에만 있고 어디에도 올리지 않아요. "저장"을 눌러야 사진첩에 남아요. 보험사에는 사진첩에서 보내세요. <a href="privacy.html">개인정보 안내</a></p>
 
 <script>
 (function () {
@@ -184,11 +198,81 @@
     box.type = "checkbox"; box.id = "done-" + step.n;
     box.addEventListener("change", function () { li.classList.toggle("done", box.checked); update(); });
     label.append(box, document.createTextNode("찍었어요"));
-    body.append(head, dist, text, label);
+
+    // 폰 카메라: 사진 단계는 사진, "V"(한 바퀴 영상)는 영상
+    var video = step.kind === "V";
+    var input = document.createElement("input");
+    input.type = "file"; input.accept = video ? "video/*" : "image/*"; input.setAttribute("capture", "environment");
+    var shoot = document.createElement("button");
+    shoot.type = "button"; shoot.className = "shoot"; shoot.textContent = video ? "영상 찍기" : "사진 찍기";
+    shoot.addEventListener("click", function () { input.click(); });
+    var save = document.createElement("button");
+    save.type = "button"; save.textContent = "저장"; save.disabled = true;
+    var actions = document.createElement("div");
+    actions.className = "actions";
+    actions.append(shoot, save, label);
+    var note = document.createElement("div");
+    note.className = "shot-note";
+
+    var item = { step: step, li: li, box: box, file: null, saved: false };
+    input.addEventListener("change", function () {
+      var f = input.files && input.files[0];
+      input.value = "";
+      if (!f) return;
+      var ext = (f.name.split(".").pop() || (video ? "mp4" : "jpg")).toLowerCase();
+      item.file = new File([f], "okaynow-" + step.n + "-" + step.title.replace(/[\s·]+/g, "-") + "." + ext, { type: f.type });
+      item.saved = false;
+      var old = li.querySelector(".shot");
+      if (old) { URL.revokeObjectURL(old.src); old.remove(); }
+      var preview = document.createElement(video ? "video" : "img");
+      preview.className = "shot"; preview.src = URL.createObjectURL(item.file);
+      if (video) { preview.controls = true; preview.muted = true; preview.playsInline = true; }
+      else preview.alt = step.title + " 사진";
+      body.insertBefore(preview, note);
+      shoot.textContent = "다시 찍기";
+      save.disabled = false; save.textContent = "저장";
+      note.textContent = "아직 저장 안 됨";
+      box.checked = true; li.classList.add("done"); update();
+    });
+    save.addEventListener("click", function () {
+      if (!item.file) return;
+      saveFile(item.file).then(function (ok) {
+        if (!ok) return;
+        item.saved = true; save.textContent = "저장함"; note.textContent = "";
+      });
+    });
+    body.append(head, dist, text, actions, input, note);
     li.appendChild(body);
     list.appendChild(li);
-    return { step: step, li: li, box: box };
+    return item;
   });
+
+  // 공유 시트(사진에 저장·보내기)가 되면 그것으로, 아니면 내려받기
+  function saveFile(file) {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: "사고 사진" })
+        .then(function () { return true; })
+        .catch(function (e) { return e && e.name === "AbortError" ? false : download(file); });
+    }
+    return Promise.resolve(download(file));
+  }
+  function download(file) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(file); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+    return true;
+  }
+
+  // 저장 안 한 사진이 있으면 페이지를 닫기 전에 묻는다(사진은 페이지 메모리에만 있다).
+  window.addEventListener("beforeunload", function (e) {
+    if (items.some(function (i) { return i.file && !i.saved; })) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  // 고정한 위 영역 높이만큼 단계 카드가 가려지지 않게
+  var top = document.getElementById("top");
+  function syncHeader() { document.documentElement.style.setProperty("--header-h", top.offsetHeight + "px"); }
+  syncHeader(); window.addEventListener("resize", syncHeader);
 
   function update() {
     var done = items.filter(function (i) { return i.box.checked; }).length;
@@ -199,6 +283,7 @@
   // 폰이 직접 읽어 준다(차량 스피커는 차 밖에서 잘 안 들린다).
   function say(text) {
     if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     u.lang = "ko-KR";
     speechSynthesis.speak(u);
@@ -206,13 +291,8 @@
   document.getElementById("read-next").addEventListener("click", function () {
     var next = items.find(function (i) { return !i.box.checked; });
     if (!next) { say("다 찍었어요. 차에서 촬영 완료를 누르세요."); return; }
-    next.li.scrollIntoView({ behavior: "smooth", block: "center" });
+    next.li.scrollIntoView({ behavior: "smooth", block: "start" });
     say(next.step.n + "번. " + next.step.title + ". " + next.step.text);
-  });
-  document.getElementById("read-all").addEventListener("click", function () {
-    speechSynthesis && speechSynthesis.cancel();
-    say("차도 쪽은 피하세요.");
-    items.forEach(function (i) { say(i.step.n + "번. " + i.step.title); });
   });
 })();
 </script>
