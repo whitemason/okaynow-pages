@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OkayNow 개인정보 안내</title>
+<!--
+  OkayNow 개인정보 안내. 차량 앱 C0 "개인정보" 화면(PrivacyScreen.kt)과 같은 내용을 자세히 적는다.
+  앱 동작이 바뀌면(예: 파손 사진 분석으로 서버 전송이 생기면) 이 문서와 앱 문구를 함께 고친다.
+  TODO: 문의처(팀 연락 이메일)를 정하면 "문의" 절에 넣는다.
+-->
+<style>
+  :root {
+    --bg: #f4f5f6; --fg: #131417; --muted: #686a72; --card: #ffffff; --line: #c7c9ce; --brand: #0064ff;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131417; --fg: #ffffff; --muted: #c7c9ce; --card: #1d1e21; --line: #44464e; --brand: #0082ff; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 32px max(16px, env(safe-area-inset-left)); }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0 4px; }
+  h2 { font-size: 17px; margin: 24px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .key { font-weight: 700; font-size: 18px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  tr:last-child th, tr:last-child td { border-bottom: 0; }
+  th { width: 28%; font-weight: 700; }
+  td { color: var(--fg); }
+  ul { margin: 0; padding-left: 20px; }
+  li + li { margin-top: 6px; }
+  a { color: var(--brand); }
+  .foot { color: var(--muted); font-size: 14px; margin-top: 24px; }
+  @media (max-width: 480px) { th { width: 34%; } }
+</style>
+</head>
+<body>
+<main>
+<h1>OkayNow 개인정보 안내</h1>
+<p class="lede">사고 처리 도우미 OkayNow(팀 Whitemason)가 어떤 정보를 쓰고 어디에 두는지 알려 드려요. 시행일 2026년 11월 10일.</p>
+
+<div class="card">
+  <p class="key">사고 정보는 차 안에만 저장하고, 우리 서버로 보내지 않아요.</p>
+  OkayNow에는 개인정보를 모으는 서버가 없어요. 폰으로 넘기는 처리 기록도 QR 주소 안에만 담겨요.
+</div>
+
+<h2>어떤 정보를 쓰나요</h2>
+<table>
+  <tr><th>위치</th><td>사고 처리 중 119 안내(현재 위치 읽어 주기)와 접수 요약에만 써요. 사고 처리 단계에서만 차량 위치를 확인해요.</td></tr>
+  <tr><th>음성</th><td>"사고 났어요", "있어요" 같은 답을 알아듣는 데 써요. 음성 인식·합성은 차량의 Gleo AI가 차 안에서 처리하고, 앱은 녹음을 저장하지 않아요. 홈 화면에서는 앱 화면이 보일 때만 들어요.</td></tr>
+  <tr><th>차량 신호</th><td>속도, 브레이크, 비상등, 기어, 문 상태로 충격을 추정하고 차량을 점검해요. 저장하지 않고 그 자리에서만 써요.</td></tr>
+  <tr><th>사고 기록</th><td>사고 시각, 위치(주소·좌표), 부상 여부, 119 안내 여부, 안전 확보, 차량 점검 결과, 파손 부위, 보험사 연락 여부, 접수 요약 문장. 사고마다 하나씩 차량 앱 안에 저장해요.</td></tr>
+  <tr><th>보험사</th><td>직접 등록한 보험사 이름과 전화번호를 차량 앱 안에 저장해요. 전화는 자동으로 걸지 않고, 번호가 채워진 전화 화면만 열어요.</td></tr>
+  <tr><th>사진</th><td>파손 사진은 폰 기본 카메라로 찍어 폰 사진첩에만 남아요. 앱으로 받거나 올리지 않아요.</td></tr>
+</table>
+
+<h2>폰으로 넘기는 처리 기록(QR)</h2>
+<ul>
+  <li>마지막 화면의 QR을 찍으면 처리 기록이 이 사이트의 기록 페이지로 열려요. 기록은 주소의 <code>#</code> 뒤에 압축해 담는데, 이 부분은 브라우저가 서버로 보내지 않아요. 그래서 이 사이트를 제공하는 GitHub에도 기록 내용은 전달되지 않아요.</li>
+  <li>대신 그 주소가 폰 브라우저의 방문 기록에 남을 수 있어요. 필요 없으면 방문 기록에서 지워 주세요.</li>
+  <li>기록 페이지에서 "위치" 링크를 누르면 좌표가 Google 지도로 전달돼요. 누르지 않으면 전달되지 않아요.</li>
+  <li>"요약 복사"는 폰 클립보드에만 복사해요.</li>
+</ul>
+
+<h2>얼마나 보관하고, 어떻게 지우나요</h2>
+<ul>
+  <li>사고 기록은 직접 지울 때까지 차량 앱 안에 남아요. 홈 화면 → <b>개인정보</b> → <b>기록 지우기</b>로 한 번에 지울 수 있어요.</li>
+  <li>보험사 등록은 홈 화면 → <b>보험사</b> → <b>등록 지우기</b>로 지워요.</li>
+  <li>앱을 삭제하면 차 안의 기록과 설정도 함께 지워져요.</li>
+</ul>
+
+<h2>제3자 제공</h2>
+<p>OkayNow는 사고 정보를 다른 회사나 보험사에 보내지 않아요. 보험사에 알릴지, 무엇을 알릴지는 운전자가 직접 정해요.</p>
+
+<h2>이 웹사이트</h2>
+<p>이 사이트(okaynow.whitemason.club)는 GitHub Pages로 제공돼요. GitHub는 서비스 운영과 보안을 위해 접속 IP 주소 같은 기술 정보를 기록할 수 있어요(<a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub 개인정보 처리방침</a>). 이 사이트는 쿠키나 분석 도구를 쓰지 않고, 아무것도 업로드하지 않아요.</p>
+
+<h2>참고</h2>
+<p>OkayNow가 만드는 요약과 파손 부위 정리는 참고 자료예요. 손해사정 결과가 아니에요.</p>
+
+<p class="foot">OkayNow · 사고 순간, 안심 ON · 팀 Whitemason</p>
+</main>
+</body>
+</html>
