@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { url } from '../consts';
+
+interface Props {
+  title: string;
+  description?: string;
+  current?: 'privacy';
+  alt?: boolean;
+  stickyHeader?: boolean;
+}
+
+const {
+  title,
+  description = '처음 사고를 겪은 운전자에게 안전 확보부터 사진·영상 촬영, 보험사 접수까지 차량 충격 감지와 음성 안내로 도와주는 Pleos Connect 앱 OkayNow',
+  current,
+  alt = false,
+  stickyHeader = false,
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonical}>
+  <link rel="icon" href={url('favicon.svg')} type="image/svg+xml">
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type" content="website">
+  <meta property="og:url" content={canonical}>
+  <slot name="head" />
+</head>
+<body class:list={{ alt }}>
+  <SiteHeader current={current} sticky={stickyHeader} />
+  <slot />
+  <SiteFooter />
+</body>
+</html>

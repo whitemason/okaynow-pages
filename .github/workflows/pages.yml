@@ -1,6 +1,5 @@
-# OkayNow 폰 페이지를 GitHub Pages로 배포한다.
-# 저장소 Settings → Pages → Source를 "GitHub Actions"로 둔다.
-# 사용자 도메인은 Settings → Pages → Custom domain에서 정한다(Actions 배포에서는 CNAME 파일을 읽지 않음).
+# OkayNow 사이트를 Astro로 빌드해 GitHub Pages로 배포한다.
+# 저장소 Settings → Pages → Source는 "GitHub Actions", 사용자 도메인은 okaynow.whitemason.club.
 name: Deploy Pages
 
 on:
@@ -18,16 +17,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Build with Astro
+        uses: withastro/action@v6
+        with:
+          package-manager: npm
+      - name: Check fixed paths
+        # 차량 앱 QR(?steps= → guide.html, report.html#)과 개인정보 안내 주소가 빌드 결과에 그대로 있는지 확인한다.
+        run: test -f dist/index.html && test -f dist/guide.html && test -f dist/report.html && test -f dist/privacy.html && test -f dist/car_top.png
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4

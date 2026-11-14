@@ -1,0 +1,371 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL, MARKET_URL, url } from '../consts';
+import c1 from '../assets/screens/C1.png';
+import c2 from '../assets/screens/C2.png';
+import c3 from '../assets/screens/C3.png';
+import c5 from '../assets/screens/C5.png';
+import c6 from '../assets/screens/C6.png';
+import c7 from '../assets/screens/C7.png';
+import c8 from '../assets/screens/C8.png';
+import c9 from '../assets/screens/C9.png';
+
+// 차량 앱이 실제로 보는 신호(okaynow-pleos의 ImpactConfig·PLAN 4절)만 적는다.
+const signals = [
+  { title: '급감속', body: '브레이크로 낼 수 없는 1.2g 이상의 감속', icon: '<path d="M4 17a8 8 0 1 1 16 0"></path><path d="M12 17l4.5-6"></path>' },
+  { title: '브레이크 없음', body: '페달을 밟지 않았는데 차가 멈춤', icon: '<circle cx="12" cy="12" r="8"></circle><path d="M6.5 17.5l11-11"></path>' },
+  { title: '비상등', body: '멈춘 뒤 30초 안에 켠 비상등', icon: '<path d="M12 4l9 15H3z"></path><path d="M12 10v4M12 16.5v.5"></path>' },
+  { title: 'P단 전환', body: '급정차 뒤 바로 P단으로', icon: '<rect x="5" y="4" width="14" height="16" rx="3"></rect><path d="M10 16V8h2.5a2.5 2.5 0 0 1 0 5H10"></path>' },
+  { title: '문 열림', body: '급정차 뒤 문을 열고 내림', icon: '<path d="M6 21V4h9l3 3v14"></path><path d="M13 12h.5"></path><path d="M3 21h18"></path>' },
+  { title: '안전 경고', body: '에어백·경고등 같은 안전 신호', icon: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"></path><path d="M12 8v5M12 15.5v.5"></path>' },
+];
+
+// 사고 뒤 순서. 화면은 Pleos Connect 에뮬레이터에서 찍은 실제 앱 화면이다.
+const gallery = [
+  { img: c2, step: '부상 확인', title: '다친 사람이 있나요?', body: '있으면 바로 119로. 말로 답해도 돼요.' },
+  { img: c3, step: '119 안내', title: '위치를 읽어 줘요.', body: '큰 119 버튼과 함께 지금 주소를 보여 주고 소리 내어 읽어요.' },
+  { img: c5, step: '차량 점검', title: '확인할 곳을 먼저.', body: '문, 등화, 경고등을 차가 직접 점검해요.' },
+  { img: c6, step: '촬영 안내', title: '이 순서로 찍으세요.', body: '부딪힌 곳을 누르면 촬영 동선과 QR이 나와요.' },
+  { img: c7, step: '파손 부위', title: '어디가 부서졌는지.', body: '위에서 본 차 그림에 표시해요. 참고용이에요.' },
+  { img: c8, step: '보험사 접수', title: '무엇을 말할지.', body: '통화 가이드와 함께 보험사 전화 화면을 열어요.' },
+  { img: c9, step: '마무리', title: '기록은 폰으로.', body: '처리한 일을 체크리스트와 QR로 넘겨요.' },
+];
+
+const tech = [
+  { name: 'Vehicle SDK', body: 'Drive · Door · Light · Safety · Tire로 충격 추정과 차량 점검' },
+  { name: 'Gleo TTS · STT', body: '차 안에서 처리하는 음성 질문과 음성 명령' },
+  { name: 'Gleo LLM', body: '처리 기록에 담는 접수 요약 문장' },
+  { name: 'Fused Location · NaviHelper', body: '119 안내와 접수에 쓰는 좌표와 주소' },
+];
+---
+<BaseLayout title="OkayNow — 사고 순간, 안심 ON" stickyHeader>
+  <script slot="head" is:inline>
+    // 차량 앱 C6 QR은 이 주소에 ?steps=를 붙여 연다. 촬영 안내 페이지로 그대로 넘긴다.
+    if (new URLSearchParams(location.search).has('steps')) location.replace('guide.html' + location.search + location.hash);
+  </script>
+
+  <section class="hero" aria-label="소개">
+    <div class="wrap hero-inner">
+      <p class="eyebrow-hero">Pleos Connect 사고 대응 도우미</p>
+      <h1>사고 순간, 안심 ON.</h1>
+      <p class="lede">처음 사고를 겪은 운전자에게, 안전 확보부터 사진·영상 촬영, 보험사 접수까지. 차가 먼저 알아채고 한 단계씩 말로 안내해요.</p>
+      <div class="cta">
+        {MARKET_URL ? (
+          <a class="pill store" href={MARKET_URL}>Pleos App Market에서 받기</a>
+        ) : (
+          <span class="soon">Pleos App Market 출시 준비 중</span>
+        )}
+        <p class="platforms">Pleos Connect 차량 · 휴대폰은 설치 없이 웹으로</p>
+        <a class="link" href={url('#features')}>어떻게 돕는지 보기 ›</a>
+      </div>
+      <figure class="display">
+        <Image src={c1} alt="차량 화면에 '사고가 났나요?'라는 질문과 '네', '아니요' 버튼이 크게 떠 있는 OkayNow 화면" widths={[640, 1024, 1682]} sizes="(max-width: 1024px) 100vw, 980px" loading="eager" />
+      </figure>
+    </div>
+  </section>
+
+  <main class="home">
+    <div class="wrap sections">
+      <section id="detect" aria-labelledby="detect-title">
+        <div class="section-head">
+          <h2 id="detect-title">사고가 나면, 차가 먼저 묻습니다.</h2>
+          <p class="section-lede">휴대폰은 사고를 모릅니다. 차는 압니다. OkayNow는 주행 중 차량 신호를 조용히 지켜보다가, 충격 점수가 넘으면 "사고가 났나요?"라고 먼저 묻습니다.</p>
+        </div>
+        <div class="grid signals">
+          {signals.map((s) => (
+            <div class="tile signal">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={s.icon}></svg>
+              <strong>{s.title}</strong>
+              <span>{s.body}</span>
+            </div>
+          ))}
+        </div>
+        <p class="note">답이 없고 충격이 크면 기다리지 않고 119 안내로 넘어가요. 가벼운 접촉처럼 감지가 어려운 사고는 "사고 났어요"라고 말하거나 버튼 하나로 시작해요.</p>
+      </section>
+
+      <section id="features" aria-labelledby="features-title">
+        <div class="section-head">
+          <h2 id="features-title">놓치지 않게, 순서대로.</h2>
+          <p class="section-lede">부상 확인이 늘 먼저, 119가 보험사보다 먼저. 해야 할 일을 하나씩 보여 주고, 버튼 이름을 말하면 그 버튼이 눌려요.</p>
+        </div>
+        <ol class="gallery" aria-label="사고 처리 단계">
+          {gallery.map((g, i) => (
+            <li class="shot">
+              <Image src={g.img} alt={`${g.step} 화면: ${g.title}`} widths={[480, 840]} sizes="(max-width: 734px) 82vw, 420px" />
+              <div class="caption">
+                <span class="step-no">{String(i + 1).padStart(2, '0')} · {g.step}</span>
+                <strong>{g.title}</strong>
+                <span>{g.body}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="drive" aria-labelledby="drive-title">
+        <div class="drive-text">
+          <h2 id="drive-title">달릴 땐 말로, 멈추면 화면으로.</h2>
+          <p>주행 중에는 음성과 큰 버튼 한두 개만 보여요. 목록, 차 그림, 입력은 차를 세우고 P단으로 바꾼 뒤에 열려요. 아직 달리고 있다면 "안전한 곳에 차를 세우고 P단으로 바꿔 주세요"라고 먼저 안내해요.</p>
+        </div>
+        <div class="drive-modes" aria-hidden="true">
+          <div class="mode"><b>D</b><span>음성 + 큰 버튼</span></div>
+          <div class="mode on"><b>P</b><span>안전 확보 · 점검 · 촬영 · 접수</span></div>
+        </div>
+      </section>
+
+      <section id="phone" aria-labelledby="phone-title">
+        <div class="section-head">
+          <h2 id="phone-title">휴대폰으로 이어서.</h2>
+          <p class="section-lede">차 밖에서 할 일은 휴대폰이 이어받아요. 차 화면의 QR을 카메라로 찍으면 바로 열려요. 설치도, 로그인도 없어요.</p>
+        </div>
+        <div class="phones">
+          <div class="tile phone-tile">
+            <div class="phone" role="img" aria-label="휴대폰 촬영 안내 화면: 순서대로 찍으세요, 다음 단계 듣기, 단계별 사진 찍기 버튼">
+              <div class="screen">
+                <div class="p-head"><b>순서대로 찍으세요</b><i>차도 쪽은 피하세요.</i><span class="p-btn">다음 단계 듣기</span></div>
+                <div class="p-card done"><em>1</em><b>현장 전체</b><small>3~5m</small><span class="p-thumb"></span></div>
+                <div class="p-card"><em>2</em><b>보닛 대각선</b><small>1~2m</small><span class="p-shoot">사진 찍기</span></div>
+                <div class="p-card"><em>3</em><b>보닛 가까이</b><small>30~50cm</small><span class="p-shoot">사진 찍기</span></div>
+              </div>
+            </div>
+            <div class="phone-text">
+              <strong>단계별 촬영 안내</strong>
+              <span>현장 전체, 부딪힌 곳의 대각선과 근접, 상대 번호판, 한 바퀴 영상까지. 단계마다 폰 카메라로 바로 찍고 저장해요. "다음 단계 듣기"를 누르면 폰이 읽어 줘요.</span>
+            </div>
+          </div>
+          <div class="tile phone-tile">
+            <div class="phone" role="img" aria-label="휴대폰 처리 기록 화면: 보험사에 알릴 내용과 처리 체크리스트">
+              <div class="screen">
+                <div class="p-head"><b>사고 처리 기록</b><i>11월 14일 오전 3시 39분 사고</i></div>
+                <div class="p-sum">서울 중구 세종대로에서 대물 사고가 났습니다. 다친 사람은 없습니다.<span class="p-btn">요약 복사</span></div>
+                <div class="p-row"><span>부상 확인</span><b>다친 사람 없음</b></div>
+                <div class="p-row"><span>안전 확보</span><b>완료</b></div>
+                <div class="p-row"><span>파손 부위</span><b>보닛</b></div>
+              </div>
+            </div>
+            <div class="phone-text">
+              <strong>처리 기록</strong>
+              <span>마지막 화면의 QR을 찍으면 처리한 일과 보험사에 알릴 내용이 폰에 열려요. 기록은 주소 안에만 담겨 서버를 거치지 않아요.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="insurer" aria-labelledby="insurer-title">
+        <div class="insurer-text">
+          <h2 id="insurer-title">보험사 통화까지 한 번에.</h2>
+          <p>상담원이 묻는 건 네 가지예요. 사고 시각, 장소, 대인·대물, 그리고 경위. OkayNow는 이 순서의 통화 가이드와 이미 아는 값을 크게 보여 주고, 등록한 보험사 번호가 채워진 전화 화면을 열어요.</p>
+          <ul>
+            <li>주요 손해보험사 사고접수 번호를 목록에서 골라 등록해요.</li>
+            <li>전화는 자동으로 걸지 않아요. 거는 건 언제나 운전자예요.</li>
+          </ul>
+        </div>
+        <Image class="insurer-shot" src={c8} alt="보험사에 알리세요 화면: 통화 가이드 4단계와 시각, 장소, 다친 사람, 파손 부위, 보험사 전화 버튼" widths={[640, 1024]} sizes="(max-width: 734px) 100vw, 560px" />
+      </section>
+
+      <section id="privacy" class="security" aria-labelledby="privacy-title">
+        <div class="security-text">
+          <h2 id="privacy-title">사고 정보는 차 안에만.</h2>
+          <p>OkayNow에는 개인정보를 모으는 서버가 없어요.</p>
+          <ul>
+            <li>사고 기록과 보험사 등록은 차량 앱 안에만 저장하고, 홈 화면에서 언제든 지워요.</li>
+            <li>음성은 차량의 Gleo AI가 차 안에서 처리하고, 녹음은 저장하지 않아요.</li>
+            <li>폰으로 넘기는 기록은 주소의 # 뒤에만 담겨 서버로 가지 않아요. 사진은 폰에만 남아요.</li>
+          </ul>
+          <p class="note"><a href={url('privacy.html')}>개인정보 안내 읽기</a></p>
+        </div>
+        <div class="security-art" aria-hidden="true">
+          <svg viewBox="0 0 120 120" width="120" height="120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 74l10-26c2-5 6-8 12-8h36c6 0 10 3 12 8l10 26"></path>
+            <path d="M14 74h92v20a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z"></path>
+            <path d="M28 98v8M92 98v8"></path>
+            <rect x="48" y="52" width="24" height="18" rx="3"></rect>
+            <path d="M53 52v-5a7 7 0 0 1 14 0v5"></path>
+          </svg>
+        </div>
+      </section>
+
+      <section id="tech" aria-labelledby="tech-title">
+        <div class="section-head">
+          <h2 id="tech-title">Pleos Connect로 만들었어요.</h2>
+          <p class="section-lede">차량 기능은 쓰기 전에 지원 여부를 먼저 확인하고, 지원하지 않는 기능은 숨긴 채 나머지로 계속 동작해요.</p>
+        </div>
+        <div class="grid tech">
+          {tech.map((t) => (
+            <div class="tile tech-item">
+              <strong>{t.name}</strong>
+              <span>{t.body}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="support" class="support" aria-labelledby="support-title">
+        <h2 id="support-title">지원.</h2>
+        <div class="faq">
+          <details>
+            <summary>어떤 차에서 쓸 수 있나요?</summary>
+            <p>Pleos Connect가 들어간 차량용 앱이에요. Pleos App Market 출시를 준비하고 있어요. 휴대폰 쪽은 앱 설치 없이 QR로 여는 웹이라 iPhone과 Android 모두에서 열려요.</p>
+          </details>
+          <details>
+            <summary>사고가 아닌데 "사고가 났나요?"라고 물어요.</summary>
+            <p>"아니요"라고 답하면 바로 조용히 감시로 돌아가요. 급정거처럼 사고가 아닌 경우를 줄이도록 감지 기준을 계속 다듬고 있어요.</p>
+          </details>
+          <details>
+            <summary>보험사에 자동으로 전화하나요?</summary>
+            <p>아니요. 등록한 번호가 채워진 전화 화면만 열고, 거는 건 운전자가 해요. 119도 마찬가지로 큰 버튼으로 안내만 해요.</p>
+          </details>
+          <details>
+            <summary>찍은 사진은 어디에 저장되나요?</summary>
+            <p>휴대폰에만 있어요. 촬영 안내 페이지에서 "저장"을 누르면 사진첩이나 파일에 남고, 어디에도 올리지 않아요.</p>
+          </details>
+          <details>
+            <summary>사고 기록을 지우고 싶어요.</summary>
+            <p>차량 앱 홈 화면 › 개인정보 › 기록 지우기로 한 번에 지워요. 앱을 삭제해도 함께 지워져요.</p>
+          </details>
+        </div>
+        <p class="note">
+          {CONTACT_EMAIL ? <>그 밖의 문의는 <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>로 보내 주세요.</> : <>문의 창구는 준비 중이에요. 개인정보와 관련된 내용은 <a href={url('privacy.html')}>개인정보 안내</a>를 확인해 주세요.</>}
+        </p>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero { background: var(--dark-bg); color: var(--dark-fg); text-align: center; overflow: hidden; }
+  .hero-inner { max-width: calc(980px + var(--gutter) * 2); padding-top: 72px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .eyebrow-hero { margin: 0; font-size: 19px; font-weight: 600; color: var(--dark-accent); }
+  h1 { margin: 0; font-size: 64px; line-height: 1.06; letter-spacing: -0.015em; }
+  .lede { margin: 6px 0 0; max-width: 680px; font-size: 21px; line-height: 1.38; }
+  .cta { display: flex; flex-direction: column; align-items: center; margin-top: 22px; }
+  .store { min-height: 44px; padding: 0 22px; background: var(--dark-fg); color: #1d1d1f; font-size: 17px; }
+  .store:hover { color: #1d1d1f; }
+  .soon { display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px; border-radius: 980px; border: 1px solid rgba(255, 255, 255, 0.24); font-size: 17px; }
+  .platforms { margin: 10px 0 0; font-size: 14px; line-height: 1.3; color: var(--dark-muted); }
+  .link { display: block; margin-top: 8px; padding: 10px 0; font-size: 17px; color: var(--dark-accent); text-decoration: none; }
+  .link:hover { color: var(--dark-accent); text-decoration: underline; }
+
+  /* 차량 화면 */
+  .display { width: 100%; margin: 40px 0 0; padding: 14px 14px 0; border-radius: 28px 28px 0 0; background: #1c1c1e; border: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 0; }
+  .display :global(img) { width: 100%; border-radius: 16px 16px 0 0; }
+
+  .home { background: var(--bg-alt); }
+  .sections { padding-top: 96px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 104px; }
+  section:not(.hero) { display: flex; flex-direction: column; gap: 28px; scroll-margin-top: 72px; }
+  h2 { margin: 0; font-size: 48px; line-height: 1.08; letter-spacing: -0.01em; }
+  .section-head { display: flex; flex-direction: column; gap: 12px; }
+  .section-lede { margin: 0; max-width: 680px; font-size: 19px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .note { margin: 0; font-size: 15px; color: var(--muted); }
+  .grid.tech { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .signal, .tech-item { display: flex; flex-direction: column; gap: 8px; padding: 28px 30px; }
+  .signal svg { color: var(--accent); margin-bottom: 4px; }
+  .signal strong, .tech-item strong { font-size: 21px; line-height: 1.2; }
+  .signal span, .tech-item span { font-size: 15px; color: var(--muted); }
+
+  /* 단계 갤러리: 옆으로 넘겨 본다 */
+  .gallery {
+    list-style: none; margin: 0 calc(-1 * var(--gutter)); padding: 4px var(--gutter) 16px;
+    display: grid; grid-auto-flow: column; grid-auto-columns: 420px; gap: 20px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--gutter);
+    scrollbar-width: thin;
+  }
+  .shot { scroll-snap-align: start; border-radius: var(--radius); background: var(--tile); overflow: hidden; display: flex; flex-direction: column; }
+  .shot :global(img) { width: 100%; aspect-ratio: 1682 / 1210; object-fit: cover; background: #000; }
+  .caption { padding: 20px 24px 26px; display: flex; flex-direction: column; gap: 6px; }
+  .step-no { font-size: 12px; font-weight: 600; color: var(--accent); }
+  .caption strong { font-size: 21px; line-height: 1.2; }
+  .caption span:last-child { font-size: 15px; color: var(--muted); }
+
+  /* 주행/정차 */
+  .drive.drive { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 32px 48px; padding: 48px; border-radius: var(--radius); background: var(--tile); }
+  .drive-text { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .drive-text h2 { font-size: 40px; }
+  .drive-text p { margin: 0; font-size: 17px; color: var(--fg-2); }
+  .drive-modes { flex: 0 1 300px; display: flex; flex-direction: column; gap: 12px; }
+  .mode { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: var(--radius-sm); background: var(--bg-alt); color: var(--muted); font-size: 15px; }
+  .mode b { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--fill); color: var(--fg); font-size: 21px; }
+  .mode.on { color: var(--fg); }
+  .mode.on b { background: var(--accent); color: #fff; }
+
+  /* 휴대폰 */
+  .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .phone-tile { padding: 40px 32px 32px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  .phone { width: 240px; padding: 10px; border-radius: 40px; background: #1d1d1f; box-shadow: var(--shadow); }
+  .screen { height: 440px; border-radius: 31px; background: #f4f5f6; color: #131417; padding: 34px 14px 14px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; font-size: 12px; text-align: left; }
+  .p-head { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid #c7c9ce; }
+  .p-head b { font-size: 15px; }
+  .p-head i { font-style: normal; color: #686a72; font-size: 11px; }
+  .p-btn { margin-top: 4px; align-self: stretch; text-align: center; padding: 7px; border-radius: 999px; background: #0064ff; color: #fff; font-weight: 600; font-size: 11px; }
+  .p-card { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 2px 8px; padding: 10px; border-radius: 12px; background: #fff; border: 1px solid #c7c9ce; }
+  .p-card em { font-style: normal; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: #131417; color: #fff; font-size: 10px; font-weight: 700; }
+  .p-card small { color: #686a72; }
+  .p-card.done { opacity: 0.6; }
+  .p-thumb { grid-column: 1 / -1; height: 44px; border-radius: 8px; background: linear-gradient(135deg, #8a8d93, #3d3f44); }
+  .p-shoot { grid-column: 1 / -1; justify-self: start; padding: 5px 10px; border-radius: 999px; background: #0064ff; color: #fff; font-weight: 600; font-size: 10px; }
+  .p-sum { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #fff; border: 1px solid #c7c9ce; font-weight: 600; line-height: 1.45; }
+  .p-sum .p-btn { align-self: flex-start; padding: 5px 10px; }
+  .p-row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border-radius: 10px; background: #fff; border: 1px solid #c7c9ce; }
+  .p-row span { color: #686a72; }
+  .phone-text { display: flex; flex-direction: column; gap: 8px; align-self: stretch; }
+  .phone-text strong { font-size: 24px; line-height: 1.17; }
+  .phone-text span { font-size: 15px; color: var(--muted); }
+
+  /* 보험사 */
+  .insurer.insurer { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 32px 48px; }
+  .insurer-text { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .insurer-text p { margin: 0; font-size: 19px; color: var(--fg-2); }
+  .insurer-text ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 15px; display: flex; flex-direction: column; gap: 6px; }
+  .insurer-shot { flex: 1 1 460px; min-width: 0; border-radius: var(--radius); box-shadow: var(--shadow); background: #000; }
+
+  /* 개인정보(어두운 타일) */
+  .security.security { flex-direction: row; flex-wrap: wrap; gap: 0; overflow: hidden; border-radius: var(--radius); background: var(--dark-bg); color: var(--dark-fg); }
+  .security-text { flex: 1 1 420px; min-width: 0; padding: 48px; display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .security-text p { margin: 0; font-size: 19px; }
+  .security-text ul { margin: 4px 0 0; padding-left: 1.1em; color: var(--dark-sub); font-size: 15px; display: flex; flex-direction: column; gap: 6px; }
+  .security-text .note { font-size: 15px; }
+  .security-text a { color: var(--dark-fg); text-decoration: underline; }
+  .security-text a:hover { color: var(--dark-fg); opacity: 0.8; }
+  .security-art { flex: 1 1 300px; min-height: 320px; display: flex; align-items: center; justify-content: center; color: var(--dark-fg); background: radial-gradient(circle at 50% 45%, #2c2c2e, #000 70%); }
+  .security-art svg { width: 150px; height: 150px; }
+
+  /* 지원 */
+  .faq { display: flex; flex-direction: column; border-radius: var(--radius); background: var(--tile); overflow: hidden; }
+  .faq details { border-top: 1px solid var(--line-soft); }
+  .faq details:first-child { border-top: 0; }
+  .faq summary { list-style: none; display: flex; justify-content: space-between; gap: 16px; padding: 20px 28px; font-weight: 600; cursor: pointer; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; font-weight: 400; color: var(--muted); }
+  .faq details[open] summary::after { content: '−'; }
+  .faq p { margin: 0; padding: 0 28px 22px; color: var(--fg-2); font-size: 15px; }
+
+  @media (max-width: 734px) {
+    .hero-inner { padding-top: 48px; gap: 10px; }
+    .eyebrow-hero { font-size: 15px; }
+    h1 { font-size: 40px; line-height: 1.1; }
+    .lede { font-size: 17px; }
+    .cta { margin-top: 16px; }
+    .display { margin-top: 24px; padding: 8px 8px 0; border-radius: 18px 18px 0 0; }
+    .display :global(img) { border-radius: 10px 10px 0 0; }
+    .sections { padding-top: 56px; padding-bottom: 72px; gap: 64px; }
+    section:not(.hero) { gap: 18px; }
+    h2 { font-size: 32px; }
+    .section-lede { font-size: 17px; }
+    .grid, .grid.tech { grid-template-columns: 1fr; gap: 12px; }
+    .signal, .tech-item { padding: 22px 24px; }
+    .gallery { grid-auto-columns: 82vw; gap: 12px; }
+    .drive.drive { padding: 28px 24px; }
+    .drive-text h2 { font-size: 28px; }
+    .phones { grid-template-columns: 1fr; gap: 12px; }
+    .phone-tile { padding: 32px 22px 24px; }
+    .insurer-text p { font-size: 17px; }
+    .security-text { order: 2; padding: 24px 20px 28px; }
+    .security-text p { font-size: 17px; }
+    .security-art { order: 1; min-height: 200px; }
+    .faq summary { padding: 18px 20px; }
+    .faq p { padding: 0 20px 18px; }
+  }
+</style>
