@@ -1,8 +1,9 @@
 ---
 // 개인정보 안내. 차량 앱 C0 "개인정보" 화면(okaynow-pleos PrivacyScreen.kt)과 같은 내용을 자세히 적는다.
 // 앱 동작이 바뀌면(예: 파손 사진 분석으로 서버 전송이 생기면) 이 문서와 앱 문구를 함께 고친다.
-// TODO: 문의처(팀 연락 이메일)를 정하면 consts.ts CONTACT_EMAIL과 함께 "문의" 절을 넣는다.
+// 문의처는 consts.ts CONTACT_EMAIL 하나만 고친다.
 import LegalLayout from '../layouts/LegalLayout.astro';
+import { CONTACT_EMAIL } from '../consts';
 
 const toc = [
   { id: 'p1', text: '1. 어떤 정보를 쓰나요' },
@@ -11,6 +12,7 @@ const toc = [
   { id: 'p4', text: '4. 제3자 제공' },
   { id: 'p5', text: '5. 이 웹사이트' },
   { id: 'p6', text: '6. 참고' },
+  { id: 'p7', text: '7. 문의' },
 ];
 ---
 <LegalLayout title="OkayNow 개인정보 안내" description="OkayNow가 쓰는 정보와 저장 위치, 지우는 방법" current="privacy" toc={toc}>
@@ -59,6 +61,9 @@ const toc = [
 
 <h2 id="p6">6. 참고</h2>
 <p>OkayNow가 만드는 요약과 파손 부위 정리는 참고 자료예요. 손해사정 결과가 아니에요.</p>
+
+<h2 id="p7">7. 문의</h2>
+<p>개인정보와 앱에 관한 문의는 팀 Whitemason(<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>)으로 보내 주세요.</p>
 
 <footer>OkayNow · 사고 순간, 안심 ON · 팀 Whitemason</footer>
 </LegalLayout>

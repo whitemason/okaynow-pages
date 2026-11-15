@@ -5,7 +5,7 @@ export const MARKET_URL = '';
 export const GITHUB_URL = 'https://github.com/whitemason/okaynow-pleos';
 
 /** 문의 이메일. 정해지면 넣는다. 비어 있으면 "준비 중"으로 보인다. */
-export const CONTACT_EMAIL = '';
+export const CONTACT_EMAIL = 'engineering@whitemason.club';
 
 /** base(astro.config.mjs)를 붙인 사이트 안 주소 */
 export function url(path = '') {
