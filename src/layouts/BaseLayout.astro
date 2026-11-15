@@ -30,11 +30,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <title>{title}</title>
   <meta name="description" content={description}>
   <link rel="canonical" href={canonical}>
-  <link rel="icon" href={url('favicon.svg')} type="image/svg+xml">
+  <link rel="icon" href={url('favicon-32.png')} type="image/png" sizes="32x32">
+  <link rel="icon" href={url('favicon-192.png')} type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href={url('apple-touch-icon.png')}>
+  <meta name="theme-color" content="#0B0C13">
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
   <meta property="og:type" content="website">
   <meta property="og:url" content={canonical}>
+  <meta property="og:image" content={new URL(url('icon-512.png'), Astro.site)}>
   <slot name="head" />
 </head>
 <body class:list={{ alt }}>
